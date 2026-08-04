@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -22,9 +22,13 @@ def connect_gmail() -> RedirectResponse:
 
 
 @router.get("/callback", response_model=EmailAccountResponse)
-def gmail_callback(code: str = Query(...), state: str = Query(...), db: Session = Depends(get_db)) -> EmailAccount:
+def gmail_callback(request: Request, code: str = Query(...), state: str = Query(...), db: Session = Depends(get_db)) -> EmailAccount | RedirectResponse:
     try:
-        return gmail.complete_authorization(db, code, state)
+        account = gmail.complete_authorization(db, code, state)
+        job_id = request.session.pop("pending_gmail_job_id", None)
+        if job_id:
+            return RedirectResponse(f"/dashboard/jobs/{job_id}?gmail=connected", status_code=303)
+        return account
     except ServiceError as error:
         raise HTTPException(status_code=500, detail=str(error)) from error
 

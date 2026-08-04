@@ -51,7 +51,8 @@ async def upload_resumes(job_id: int, files: list[UploadFile] = File(...), db: S
 
 
 @router.get("/gmail/connect")
-def connect_gmail():
+def connect_gmail(request: Request, job_id: int):
+    request.session["pending_gmail_job_id"] = job_id
     return RedirectResponse(gmail.authorization_url(), status_code=302)
 
 
