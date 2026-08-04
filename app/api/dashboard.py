@@ -14,6 +14,7 @@ from app.worker import process_resume_task
 from app.services.auth import current_user
 from app.services.security import csrf_token, validate_csrf
 from app.services import reprocessing
+from app.services import chatbot
 from app.services import candidates as candidate_service
 
 router = APIRouter(prefix="/dashboard")
@@ -105,6 +106,24 @@ def reprocess_job(request: Request, job_id: int, csrf: str = Form(...), db: Sess
     for resume_id in reprocessing.reprocess_failed(db, job_id, user.id):
         process_resume_task.delay(resume_id)
     return _redirect(f"/dashboard/jobs/{job_id}")
+
+
+@router.get("/jobs/{job_id}/chat", response_class=HTMLResponse)
+def chat_page(request: Request, job_id: int, db: Session = Depends(get_db)):
+    user = current_user(request, db)
+    workspace = dashboard_service.job_workspace(db, job_id, user.id)
+    workspace.update({"user": user, "csrf_token": csrf_token(request), "answer": None, "question": None})
+    return templates.TemplateResponse(request=request, name="dashboard/chat.html", context=workspace)
+
+
+@router.post("/jobs/{job_id}/chat", response_class=HTMLResponse)
+async def chat(request: Request, job_id: int, question: str = Form(...), csrf: str = Form(...), db: Session = Depends(get_db)):
+    validate_csrf(request, csrf)
+    user = current_user(request, db)
+    workspace = dashboard_service.job_workspace(db, job_id, user.id)
+    answer = await chatbot.answer_question(db, job_id, user.id, question)
+    workspace.update({"user": user, "csrf_token": csrf_token(request), "answer": answer, "question": question})
+    return templates.TemplateResponse(request=request, name="dashboard/chat.html", context=workspace)
 
 
 @router.get("/candidates/{candidate_id}", response_class=HTMLResponse)
