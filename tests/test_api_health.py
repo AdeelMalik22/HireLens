@@ -73,3 +73,10 @@ def test_create_job_requires_authenticated_user():
 
     assert response.status_code == 303
     assert response.headers["location"] == "/login"
+
+
+def test_list_jobs_requires_authenticated_user():
+    response = TestClient(app).get("/api/v1/jobs", follow_redirects=False)
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/login"
