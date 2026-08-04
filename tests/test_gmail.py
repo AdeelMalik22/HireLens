@@ -148,3 +148,12 @@ def test_gmail_client_rejects_corrupt_encrypted_token(monkeypatch):
 
 def test_gmail_scopes_include_openid_identity_scope():
     assert "openid" in gmail.GMAIL_SCOPES
+
+
+def test_gmail_authorization_url_uses_configured_client(monkeypatch):
+    from urllib.parse import parse_qs, urlparse
+    settings = gmail.get_settings()
+    monkeypatch.setattr(settings, "google_client_id", "configured-client.apps.googleusercontent.com")
+    monkeypatch.setattr(settings, "google_client_secret", "configured-secret")
+    params = parse_qs(urlparse(gmail.authorization_url()).query)
+    assert params["client_id"][0] == "configured-client.apps.googleusercontent.com"
