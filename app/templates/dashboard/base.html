@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}HireLens{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='dashboard.css') }}">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="/dashboard"><span class="brand-mark">H</span><span>HireLens</span></a>
+      <div class="side-label">Workspace</div>
+      <nav><a class="nav-link active" href="/dashboard">Overview</a><a class="nav-link" href="/dashboard/jobs/new">Create job</a></nav>
+      <div class="sidebar-footer"><span class="status-dot"></span> System operational</div>
+    </aside>
+    <main class="main"><header class="topbar"><div><div class="eyebrow">Recruiting workspace</div><div class="top-title">Talent intelligence</div></div><a class="button button-dark" href="/dashboard/jobs/new">＋ New job</a></header>{% block content %}{% endblock %}</main>
+  </div>
+</body>
+</html>

@@ -6,7 +6,7 @@ HireLens is an AI-assisted resume screening platform. Recruiters define job requ
 
 The current version provides the FastAPI backend foundation, job management, resume uploads, Gmail OAuth, and Gmail resume attachment syncing.
 
-The React dashboard and AI resume processing pipeline are not implemented yet.
+The dashboard is server-rendered with Jinja2 inside FastAPI. The AI resume processing and candidate ranking pipeline are not implemented yet.
 
 ## Stack
 
@@ -49,6 +49,12 @@ API documentation is available at:
 
 ```text
 http://localhost:8000/docs
+```
+
+The recruiter dashboard is available at:
+
+```text
+http://localhost:8000/dashboard
 ```
 
 ## Environment Variables
@@ -120,6 +126,14 @@ Supported file types are PDF and DOCX. Duplicate files for the same job are skip
 - `GET /api/v1/integrations/gmail/callback`
 - `GET /api/v1/integrations/gmail/accounts`
 - `POST /api/v1/integrations/gmail/accounts/{account_id}/sync/{job_id}`
+
+### Dashboard
+
+- `GET /dashboard` — workspace overview
+- `GET /dashboard/jobs/new` — job creation form
+- `GET /dashboard/jobs/{job_id}` — job workspace and resume queue
+- `POST /dashboard/jobs/{job_id}/upload` — upload resumes through the dashboard
+- `POST /dashboard/jobs/{job_id}/sync` — sync Gmail attachments for a job
 
 The sync endpoint searches Gmail for PDF/DOCX attachments and imports them into the selected job. A custom Gmail search query can be supplied through the `query` parameter.
 
