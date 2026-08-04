@@ -21,3 +21,12 @@ def test_gmail_authorization_url_contains_pkce_challenge(monkeypatch):
 
     assert "code_challenge=" in url
     assert "state=" in url
+
+
+def test_gmail_callback_rejects_invalid_signed_state():
+    class FakeDB:
+        def rollback(self):
+            return None
+
+    with pytest.raises(gmail.GmailConfigurationError, match="Invalid or expired"):
+        gmail.complete_authorization(FakeDB(), "fake-code", "invalid-state")
