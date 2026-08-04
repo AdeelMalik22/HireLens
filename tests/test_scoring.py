@@ -34,3 +34,10 @@ def test_score_no_preferred_skills_awards_preferred_component():
     score, breakdown = score_candidate(job, {"skills": ["Python"], "years_of_experience": 0})
     assert score == 100
     assert breakdown["preferred"] == 20
+
+
+def test_score_experience_is_capped_at_maximum():
+    job = SimpleNamespace(required_skills=[], preferred_skills=[], minimum_years_experience=2)
+    score, breakdown = score_candidate(job, {"skills": [], "years_of_experience": 10})
+    assert score == 100
+    assert breakdown["experience"] == 30
