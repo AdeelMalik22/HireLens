@@ -61,3 +61,10 @@ def test_score_empty_candidate_skills_reports_all_required_missing():
     score, breakdown = score_candidate(job, {"skills": [], "years_of_experience": 0})
     assert score == 50
     assert breakdown["missing_required"] == ["Python", "SQL"]
+
+
+def test_score_preferred_skill_is_optional():
+    job = SimpleNamespace(required_skills=["Python"], preferred_skills=["Docker"], minimum_years_experience=0)
+    score, breakdown = score_candidate(job, {"skills": ["Python"], "years_of_experience": 0})
+    assert score == 80
+    assert breakdown["matched_preferred"] == []
