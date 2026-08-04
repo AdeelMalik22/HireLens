@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-HireLens is a FastAPI backend for recruiter-assisted resume screening. Recruiters create jobs, connect Gmail, import resume attachments, and will later review AI-processed candidate rankings in a dashboard.
+HireLens is a FastAPI backend with a Jinja dashboard for recruiter-assisted resume screening. Recruiters create jobs, connect Gmail, import resume attachments, and review AI-processed candidate rankings.
 
 ## Technology
 
@@ -24,6 +24,9 @@ HireLens is a FastAPI backend for recruiter-assisted resume screening. Recruiter
 - Never log resume contents, OAuth tokens, API keys, or other sensitive data.
 - Do not put secrets in source control. Use `.env`, which is Git-ignored.
 - Candidate scoring must be deterministic backend logic; AI is used for extraction and summaries.
+- Resume processing is asynchronous through Celery; do not perform OpenRouter calls in request handlers.
+- The OpenRouter model must be configurable through `OPENROUTER_MODEL`.
+- Failed extraction must set a safe `failed` status and preserve a user-facing error.
 
 ## Project Structure
 
@@ -45,6 +48,12 @@ pip install -r requirements.txt
 docker compose up -d
 alembic upgrade head
 uvicorn main:app --reload
+```
+
+Start the resume worker separately:
+
+```bash
+celery -A app.worker.celery_app worker --loglevel=info
 ```
 
 API documentation is available at `http://localhost:8000/docs`.
@@ -73,6 +82,14 @@ http://localhost:8000/api/v1/integrations/gmail/callback
 ```
 
 Google credentials belong in `.env` as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Gmail tokens must not be exposed in API responses or logs.
+
+## Processing Pipeline
+
+```text
+Upload or Gmail sync → queued → Celery worker → PDF/DOCX parser → OpenRouter extraction → deterministic scoring → ranked dashboard
+```
+
+The chatbot is not implemented yet. When added, it should query stored candidate and job data through services and must not independently make hiring decisions.
 
 ## Git Workflow
 

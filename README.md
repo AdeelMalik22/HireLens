@@ -1,12 +1,12 @@
 # HireLens
 
-HireLens is an AI-assisted resume screening platform. Recruiters define job requirements, connect Gmail, import resume attachments, and will be able to review ranked candidates from a dashboard.
+HireLens is an AI-assisted resume screening platform. Recruiters define job requirements, connect Gmail, import resume attachments, and review ranked candidates from a dashboard.
 
 ## Current Status
 
-The current version provides the FastAPI backend foundation, job management, resume uploads, Gmail OAuth, and Gmail resume attachment syncing.
+The current version provides the FastAPI backend foundation, job management, resume uploads, Gmail OAuth, Gmail resume syncing, resume text extraction, OpenRouter extraction, deterministic scoring, and background processing.
 
-The dashboard is server-rendered with Jinja2 inside FastAPI. The AI resume processing and candidate ranking pipeline are not implemented yet.
+The dashboard is server-rendered with Jinja2 inside FastAPI. A conversational chatbot is planned but is not implemented yet.
 
 ## Stack
 
@@ -76,10 +76,15 @@ UPLOAD_DIR=storage/uploads
 
 OPENROUTER_API_KEY=
 OPENROUTER_MODEL=openrouter/free
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_TIMEOUT_SECONDS=60
 
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_REDIRECT_URI=http://localhost:8000/api/v1/integrations/gmail/callback
+GOOGLE_LOGIN_REDIRECT_URI=http://localhost:8000/auth/google/callback
+ADMIN_EMAIL=admin@hirelens.local
+ADMIN_PASSWORD=change-me-before-production
 APP_SECRET_KEY=change-me-before-production
 ```
 
@@ -96,6 +101,12 @@ Never commit `.env` or real credentials. `.env` is ignored by Git.
 
 ```text
 http://localhost:8000/api/v1/integrations/gmail/callback
+```
+
+For Google sign-in, also add:
+
+```text
+http://localhost:8000/auth/google/callback
 ```
 
 7. Put the client ID and secret in `.env`.
@@ -144,6 +155,24 @@ Supported file types are PDF and DOCX. Duplicate files for the same job are skip
 - `POST /dashboard/jobs/{job_id}/sync` — sync Gmail attachments for a job
 
 The sync endpoint searches Gmail for PDF/DOCX attachments and imports them into the selected job. A custom Gmail search query can be supplied through the `query` parameter.
+
+## Resume Processing and Ranking
+
+Every imported resume starts with `queued` status. A Celery worker then:
+
+1. Extracts text from PDF or DOCX.
+2. Sends the resume text to the configured OpenRouter free model.
+3. Validates the structured candidate response.
+4. Calculates a deterministic match score.
+5. Stores the candidate summary, extracted data, score, and explanation.
+
+Default scoring weights are:
+
+- Required skills: 50 points
+- Experience: 30 points
+- Preferred skills: 20 points
+
+The dashboard sorts completed resumes by score. If OpenRouter is not configured, processing fails safely with a visible failed status.
 
 ## Project Structure
 
