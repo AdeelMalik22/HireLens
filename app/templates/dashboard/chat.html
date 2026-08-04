@@ -1,1 +1,28 @@
-{% extends "dashboard/base.html" %}{% block title %}Recruiter assistant · HireLens{% endblock %}{% block content %}<a class="back-link" href="/dashboard/jobs/{{ job.id }}">← Back to {{ job.title }}</a><div class="chat-header"><div class="eyebrow">Recruiter assistant</div><h1>Ask about this talent pool.</h1><p>Search candidate evidence, compare scores, and understand ranking explanations.</p></div><div class="chat-card card">{% if answer %}<div class="chat-answer"><div class="assistant-badge">H</div><div><div class="eyebrow">HireLens assistant</div><div class="answer-text">{{ answer }}</div></div></div>{% else %}<div class="chat-empty"><div class="empty-icon">✦</div><h3>What would you like to know?</h3><p>Try “Why is the top candidate ranked first?” or “Which candidates have FastAPI experience?”</p></div>{% endif %}<form method="post" action="/dashboard/jobs/{{ job.id }}/chat"><input type="hidden" name="csrf" value="{{ csrf_token }}"><textarea name="question" required rows="3" placeholder="Ask a question about this role or its candidates...">{{ question or '' }}</textarea><div class="chat-footer"><span>Answers use stored candidate evidence only.</span><button class="button button-primary" type="submit">Ask assistant <span>→</span></button></div></form></div>{% endblock %}
+{% extends "dashboard/base.html" %}{% block title %}Recruiter assistant · HireLens{% endblock %}{% block content %}<a
+        class="back-link" href="/dashboard/jobs/{{ job.id }}">← Back to {{ job.title }}</a>
+<div class="chat-header">
+    <div class="eyebrow">Recruiter assistant</div>
+    <h1>Ask about this talent pool.</h1>
+    <p>Search candidate evidence, compare scores, and understand ranking explanations.</p></div>
+<div class="chat-card card">{% if answer %}
+    <div class="chat-answer">
+        <div class="assistant-badge">H</div>
+        <div>
+            <div class="eyebrow">HireLens assistant</div>
+            <div class="answer-text">{{ answer }}</div>
+        </div>
+    </div>
+    {% else %}
+    <div class="chat-empty">
+        <div class="empty-icon">✦</div>
+        <h3>What would you like to know?</h3>
+        <p>Try “Why is the top candidate ranked first?” or “Which candidates have FastAPI experience?”</p></div>
+    {% endif %}
+    <form method="post" action="/dashboard/jobs/{{ job.id }}/chat"><input type="hidden" name="csrf"
+                                                                          value="{{ csrf_token }}"><textarea
+            name="question" required rows="3" placeholder="Ask a question about this role or its candidates...">{{ question or '' }}</textarea>
+        <div class="chat-footer"><span>Answers use stored candidate evidence only.</span>
+            <button class="button button-primary" type="submit">Ask assistant <span>→</span></button>
+        </div>
+    </form>
+</div>{% endblock %}
