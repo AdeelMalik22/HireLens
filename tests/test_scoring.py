@@ -41,3 +41,10 @@ def test_score_experience_is_capped_at_maximum():
     score, breakdown = score_candidate(job, {"skills": [], "years_of_experience": 10})
     assert score == 100
     assert breakdown["experience"] == 30
+
+
+def test_score_partial_experience_gets_partial_points():
+    job = SimpleNamespace(required_skills=[], preferred_skills=[], minimum_years_experience=4)
+    score, breakdown = score_candidate(job, {"skills": [], "years_of_experience": 2})
+    assert score == 85
+    assert breakdown["experience"] == 15
