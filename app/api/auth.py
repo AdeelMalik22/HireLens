@@ -45,8 +45,10 @@ def google_callback(request: Request, code: str, state: str, db: Session = Depen
 
 @router.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    if request.session.get("authenticated"):
+    if request.session.get("authenticated") and request.session.get("user_id"):
         return RedirectResponse("/dashboard", status_code=303)
+    if request.session.get("authenticated") and not request.session.get("user_id"):
+        request.session.clear()
     return templates.TemplateResponse(request=request, name="auth/login.html", context={"error": None, "csrf_token": csrf_token(request)})
 
 

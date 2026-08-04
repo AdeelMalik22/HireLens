@@ -27,7 +27,7 @@ def authenticate(email: str, password: str) -> bool:
 
 
 def require_dashboard_auth(request: Request) -> None:
-    if not request.session.get("authenticated"):
+    if not request.session.get("authenticated") or not request.session.get("user_id"):
         raise HTTPException(status_code=status.HTTP_303_SEE_OTHER, headers={"Location": "/login"})
 
 
