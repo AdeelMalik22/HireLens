@@ -89,3 +89,16 @@ def test_gmail_walk_parts_flattens_multiple_nested_levels():
 def test_gmail_walk_parts_returns_parts_without_nested_children():
     part = {"filename": "resume.docx", "body": {"attachmentId": "doc-1"}, "parts": []}
     assert list(gmail._walk_parts([part])) == [part]
+
+
+def test_gmail_client_decrypts_encrypted_token(monkeypatch):
+    from cryptography.fernet import Fernet
+    from app.models.email_account import EmailAccount
+
+    key = Fernet.generate_key().decode()
+    monkeypatch.setattr(gmail.get_settings(), "token_encryption_key", key)
+    token_json = '{"token":"token","refresh_token":"refresh","token_uri":"https://oauth2.googleapis.com/token","client_id":"client","client_secret":"secret","scopes":[]}'
+    account = EmailAccount(token_data=gmail.encrypt_secret(token_json), email_address="candidate@example.com", provider="gmail")
+    monkeypatch.setattr(gmail, "build", lambda *args, **kwargs: "gmail-client")
+
+    assert gmail._gmail_client(account) == "gmail-client"
