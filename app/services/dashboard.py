@@ -23,10 +23,13 @@ def job_workspace(db: Session, job_id: int, user_id: int) -> dict:
     job = job_service.get_job(db, job_id)
     if job.user_id != user_id:
         raise job_service.NotFoundError("Job not found")
+    resumes = resume_service.list_resumes(db, job_id)
+    counts = {status: sum(1 for resume in resumes if resume.processing_status == status) for status in ("queued", "processing", "retrying", "completed", "failed")}
     return {
         "job": job,
-        "resumes": sorted(resume_service.list_resumes(db, job_id), key=lambda resume: (resume.overall_score is not None, resume.overall_score or 0), reverse=True),
+        "resumes": sorted(resumes, key=lambda resume: (resume.overall_score is not None, resume.overall_score or 0), reverse=True),
         "accounts": list(db.scalars(select(EmailAccount).where(EmailAccount.user_id == user_id).order_by(EmailAccount.created_at.desc())).all()),
+        "progress": {"total": len(resumes), "completed": counts["completed"], "active": counts["queued"] + counts["processing"] + counts["retrying"], "failed": counts["failed"], "counts": counts},
     }
 
 

@@ -51,6 +51,14 @@ Start a Celery worker in a second terminal to process resumes:
 celery -A app.worker.celery_app worker --loglevel=info
 ```
 
+Optional Celery monitoring UI:
+
+```bash
+celery -A app.worker.celery_app flower --port=5555
+```
+
+Open it at `http://localhost:5555` to inspect workers, tasks, retries, and failures.
+
 API documentation is available at:
 
 ```text

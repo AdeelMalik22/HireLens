@@ -13,6 +13,7 @@ from app.services.exceptions import ServiceError
 from app.worker import process_resume_task
 from app.services.auth import current_user
 from app.services.security import csrf_token, validate_csrf
+from app.services import reprocessing
 
 router = APIRouter(prefix="/dashboard")
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
@@ -90,4 +91,14 @@ def sync_gmail(request: Request, job_id: int, account_id: int = Form(...), query
     for resume in resumes:
         if resume.processing_status == "queued":
             process_resume_task.delay(resume.id)
+    return _redirect(f"/dashboard/jobs/{job_id}")
+
+
+@router.post("/jobs/{job_id}/reprocess")
+def reprocess_job(request: Request, job_id: int, csrf: str = Form(...), db: Session = Depends(get_db)):
+    validate_csrf(request, csrf)
+    user = current_user(request, db)
+    dashboard_service.job_workspace(db, job_id, user.id)
+    for resume_id in reprocessing.reprocess_failed(db, job_id, user.id):
+        process_resume_task.delay(resume_id)
     return _redirect(f"/dashboard/jobs/{job_id}")

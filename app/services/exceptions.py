@@ -16,3 +16,7 @@ class FileTooLargeError(ServiceError):
 
 class DatabaseOperationError(ServiceError):
     pass
+
+
+class RetryableAIError(ServiceError):
+    pass

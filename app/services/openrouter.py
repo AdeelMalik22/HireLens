@@ -3,7 +3,7 @@ import json
 import httpx
 
 from app.core.config import get_settings
-from app.services.exceptions import ServiceError
+from app.services.exceptions import RetryableAIError, ServiceError
 
 
 class AIExtractionError(ServiceError):
@@ -19,8 +19,12 @@ async def extract_resume_data(text: str) -> dict:
     try:
         async with httpx.AsyncClient(timeout=settings.openrouter_timeout_seconds) as client:
             response = await client.post(f"{settings.openrouter_base_url}/chat/completions", headers={"Authorization": f"Bearer {settings.openrouter_api_key}", "Content-Type": "application/json"}, json=body)
+            if response.status_code == 429 or response.status_code >= 500:
+                raise RetryableAIError(f"OpenRouter temporarily unavailable ({response.status_code})")
             response.raise_for_status()
             content = response.json()["choices"][0]["message"]["content"]
             return json.loads(content)
+    except RetryableAIError:
+        raise
     except Exception as error:
         raise AIExtractionError("Unable to extract resume data with OpenRouter") from error

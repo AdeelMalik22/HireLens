@@ -22,6 +22,8 @@ class Resume(Base):
     source_attachment_id: Mapped[str | None] = mapped_column(String(128))
     processing_status: Mapped[str] = mapped_column(String(32), default="queued", nullable=False, index=True)
     processing_error: Mapped[str | None] = mapped_column(Text)
+    retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    last_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     candidate_name: Mapped[str | None] = mapped_column(String(255))
     candidate_email: Mapped[str | None] = mapped_column(String(320))
     extracted_data: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
