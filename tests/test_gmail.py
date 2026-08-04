@@ -174,3 +174,12 @@ def test_gmail_authorization_url_uses_google_authorization_endpoint(monkeypatch)
     monkeypatch.setattr(settings, "google_client_id", "client-id.apps.googleusercontent.com")
     monkeypatch.setattr(settings, "google_client_secret", "client-secret")
     assert gmail.authorization_url().startswith("https://accounts.google.com/o/oauth2/auth?")
+
+
+def test_gmail_client_uses_gmail_api_service(monkeypatch):
+    from app.models.email_account import EmailAccount
+    monkeypatch.setattr(gmail, "build", lambda *args, **kwargs: (args, kwargs))
+    account = EmailAccount(token_data='{"token":"token","refresh_token":"refresh","token_uri":"https://oauth2.googleapis.com/token","client_id":"client","client_secret":"secret","scopes":[]}', email_address="candidate@example.com", provider="gmail")
+    service, options = gmail._gmail_client(account)
+    assert service == "gmail"
+    assert options["cache_discovery"] is False
