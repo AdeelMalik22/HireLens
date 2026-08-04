@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     google_client_secret: str | None = None
     google_redirect_uri: str = "http://localhost:8000/api/v1/integrations/gmail/callback"
     app_secret_key: str = "change-me-in-development"
+    admin_email: str = "admin@hirelens.local"
+    admin_password: str = "change-me-before-production"
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -57,6 +57,8 @@ The recruiter dashboard is available at:
 http://localhost:8000/dashboard
 ```
 
+The dashboard is protected by a development login. Configure `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env`, then open `http://localhost:8000/` and sign in.
+
 ## Environment Variables
 
 Required or useful local settings include:
