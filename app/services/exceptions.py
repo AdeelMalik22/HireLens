@@ -12,3 +12,7 @@ class UnsupportedFileError(ServiceError):
 
 class FileTooLargeError(ServiceError):
     pass
+
+
+class DatabaseOperationError(ServiceError):
+    pass
