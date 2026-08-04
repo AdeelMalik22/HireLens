@@ -20,7 +20,7 @@ def require_dashboard_auth(request: Request) -> None:
         raise HTTPException(status_code=status.HTTP_303_SEE_OTHER, headers={"Location": "/login"})
 
 
-def google_login_url() -> tuple[str, str]:
+def google_login_url() -> tuple[str, str, str | None]:
     settings = get_settings()
     if not settings.google_client_id or not settings.google_client_secret:
         raise ValueError("Google OAuth credentials are not configured")
@@ -29,15 +29,17 @@ def google_login_url() -> tuple[str, str]:
         "redirect_uris": [settings.google_login_redirect_uri]}}
     flow = Flow.from_client_config(config, scopes=GOOGLE_LOGIN_SCOPES, redirect_uri=settings.google_login_redirect_uri)
     url, state = flow.authorization_url(prompt="select_account", access_type="offline")
-    return url, state
+    return url, state, flow.code_verifier
 
 
-def complete_google_login(code: str, state: str) -> str:
+def complete_google_login(code: str, state: str, code_verifier: str | None = None) -> str:
     settings = get_settings()
     config = {"web": {"client_id": settings.google_client_id, "client_secret": settings.google_client_secret,
         "auth_uri": "https://accounts.google.com/o/oauth2/auth", "token_uri": "https://oauth2.googleapis.com/token",
         "redirect_uris": [settings.google_login_redirect_uri]}}
     flow = Flow.from_client_config(config, scopes=GOOGLE_LOGIN_SCOPES, state=state, redirect_uri=settings.google_login_redirect_uri)
+    if code_verifier:
+        flow.code_verifier = code_verifier
     flow.fetch_token(code=code)
     claims = id_token.verify_oauth2_token(flow.credentials.id_token, GoogleRequest(), settings.google_client_id)
     return claims["email"]

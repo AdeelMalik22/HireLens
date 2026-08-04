@@ -13,8 +13,9 @@ templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent
 @router.get("/auth/google/login")
 def google_login(request: Request):
     try:
-        url, state = google_login_url()
+        url, state, code_verifier = google_login_url()
         request.session["google_login_state"] = state
+        request.session["google_login_code_verifier"] = code_verifier
         return RedirectResponse(url, status_code=302)
     except ValueError as error:
         return templates.TemplateResponse(request=request, name="auth/login.html", context={"error": str(error)}, status_code=503)
@@ -25,7 +26,8 @@ def google_callback(request: Request, code: str, state: str):
     if state != request.session.pop("google_login_state", None):
         return templates.TemplateResponse(request=request, name="auth/login.html", context={"error": "Google sign-in session expired. Please try again."}, status_code=400)
     try:
-        email = complete_google_login(code, state)
+        code_verifier = request.session.pop("google_login_code_verifier", None)
+        email = complete_google_login(code, state, code_verifier)
         request.session["authenticated"] = True
         request.session["email"] = email
         return RedirectResponse("/dashboard", status_code=303)
