@@ -135,3 +135,12 @@ def test_gmail_oauth_state_has_nonce(monkeypatch):
     state = parse_qs(urlparse(gmail.authorization_url()).query)["state"][0]
     payload = json.loads(gmail._signer().unsign(state, max_age=600))
     assert payload["nonce"]
+
+
+def test_gmail_client_rejects_corrupt_encrypted_token(monkeypatch):
+    from app.models.email_account import EmailAccount
+    from cryptography.fernet import Fernet
+    monkeypatch.setattr(gmail.get_settings(), "token_encryption_key", Fernet.generate_key().decode())
+    account = EmailAccount(token_data="gAAAA-corrupt", email_address="candidate@example.com", provider="gmail")
+    with pytest.raises(ValueError, match="decrypt"):
+        gmail._gmail_client(account)
