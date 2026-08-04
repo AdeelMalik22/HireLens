@@ -86,11 +86,11 @@ def gmail_callback(request: Request, code: str, state: str, db: Session = Depend
 
 
 @router.post("/jobs/{job_id}/sync")
-def sync_gmail(request: Request, job_id: int, account_id: int = Form(...), query: str = Form("has:attachment (filename:pdf OR filename:docx) newer_than:30d"), csrf: str = Form(...), db: Session = Depends(get_db)):
+def sync_gmail(request: Request, job_id: int, account_id: int = Form(...), query: str = Form("has:attachment (filename:pdf OR filename:docx) newer_than:30d"), page_token: str = Form(""), csrf: str = Form(...), db: Session = Depends(get_db)):
     validate_csrf(request, csrf)
     user = current_user(request, db)
     dashboard_service.job_workspace(db, job_id, user.id)
-    resumes = gmail.sync_resume_attachments_for_ids(db, account_id, job_id, query, user.id)
+    resumes = gmail.sync_resume_attachments_for_ids(db, account_id, job_id, query, user.id, page_token or None)
     for resume in resumes:
         if resume.processing_status == "queued":
             process_resume_task.delay(resume.id)

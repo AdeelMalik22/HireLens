@@ -14,6 +14,7 @@ class EmailAccount(Base):
     provider: Mapped[str] = mapped_column(String(32), nullable=False, default="gmail")
     email_address: Mapped[str] = mapped_column(String(320), nullable=False, unique=True)
     token_data: Mapped[str] = mapped_column(Text, nullable=False)
+    next_page_token: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     user: Mapped["User"] = relationship(back_populates="email_accounts")

@@ -104,6 +104,7 @@ def sync_resume_attachments(db: Session, account: EmailAccount, job: Job, query:
         client = _gmail_client(account)
         request = client.users().messages().list(userId="me", q=query, maxResults=50, **({"pageToken": page_token} if page_token else {}))
         response = request.execute()
+        account.next_page_token = response.get("nextPageToken")
         imported: list[Resume] = []
         upload_dir = Path(get_settings().upload_dir) / str(job.id)
         upload_dir.mkdir(parents=True, exist_ok=True)
