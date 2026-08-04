@@ -12,7 +12,7 @@ from app.core.config import get_settings
 from app.models.email_account import EmailAccount
 from app.models.job import Job
 from app.models.resume import Resume
-from app.services.exceptions import DatabaseOperationError, ServiceError
+from app.services.exceptions import DatabaseOperationError, NotFoundError, ServiceError
 
 logger = logging.getLogger(__name__)
 GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
@@ -41,6 +41,14 @@ def authorization_url() -> str:
     state = _signer().sign("gmail-connect").decode()
     url, _ = flow.authorization_url(access_type="offline", include_granted_scopes="true", prompt="consent", state=state)
     return url
+
+
+def list_accounts(db: Session) -> list[EmailAccount]:
+    try:
+        return list(db.query(EmailAccount).order_by(EmailAccount.created_at.desc()).all())
+    except Exception as error:
+        logger.exception("Failed to list Gmail accounts")
+        raise DatabaseOperationError("Unable to list Gmail accounts") from error
 
 
 def complete_authorization(db: Session, code: str, state: str) -> EmailAccount:
@@ -128,6 +136,14 @@ def sync_resume_attachments(db: Session, account: EmailAccount, job: Job, query:
         db.rollback()
         logger.exception("Failed to sync Gmail resumes", extra={"job_id": job.id, "account_id": account.id})
         raise DatabaseOperationError("Unable to sync resumes from Gmail") from error
+
+
+def sync_resume_attachments_for_ids(db: Session, account_id: int, job_id: int, query: str) -> list[Resume]:
+    account = db.get(EmailAccount, account_id)
+    job = db.get(Job, job_id)
+    if account is None or job is None:
+        raise NotFoundError("Email account or job not found")
+    return sync_resume_attachments(db, account, job, query)
 
 
 def _walk_parts(parts: list[dict]):
