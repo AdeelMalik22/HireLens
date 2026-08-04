@@ -191,3 +191,11 @@ def test_gmail_authorization_rejects_missing_client_id(monkeypatch):
     monkeypatch.setattr(settings, "google_client_secret", "client-secret")
     with pytest.raises(gmail.GmailConfigurationError):
         gmail.authorization_url()
+
+
+def test_gmail_authorization_rejects_missing_client_secret(monkeypatch):
+    settings = gmail.get_settings()
+    monkeypatch.setattr(settings, "google_client_id", "client-id.apps.googleusercontent.com")
+    monkeypatch.setattr(settings, "google_client_secret", None)
+    with pytest.raises(gmail.GmailConfigurationError):
+        gmail.authorization_url()
