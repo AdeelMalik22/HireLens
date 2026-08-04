@@ -27,3 +27,10 @@ def test_score_missing_required_skill_reduces_score():
     score, breakdown = score_candidate(job, {"skills": ["Python"], "years_of_experience": 0})
     assert score == 75
     assert breakdown["missing_required"] == ["FastAPI"]
+
+
+def test_score_no_preferred_skills_awards_preferred_component():
+    job = SimpleNamespace(required_skills=["Python"], preferred_skills=[], minimum_years_experience=0)
+    score, breakdown = score_candidate(job, {"skills": ["Python"], "years_of_experience": 0})
+    assert score == 100
+    assert breakdown["preferred"] == 20
