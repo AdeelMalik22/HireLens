@@ -29,3 +29,10 @@ def test_root_redirects_to_dashboard():
 
     assert response.status_code == 307
     assert response.headers["location"] == "/dashboard"
+
+
+def test_dashboard_redirects_anonymous_user_to_login():
+    response = TestClient(app).get("/dashboard", follow_redirects=False)
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/login"
