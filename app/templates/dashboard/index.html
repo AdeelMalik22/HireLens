@@ -1,7 +1,39 @@
 {% extends "dashboard/base.html" %}{% block title %}Overview · HireLens{% endblock %}
 {% block content %}
-<section class="hero"><div><div class="eyebrow">Your hiring pipeline</div><h1>Find the right people, faster.</h1><p>Define the role, connect your inbox, and let HireLens organize every application.</p></div><a class="button button-primary" href="/dashboard/jobs/new">Create a job <span>→</span></a></section>
-<section class="metrics"><div class="metric"><span>Active roles</span><strong>{{ job_count }}</strong><small>Across your workspace</small></div><div class="metric"><span>Resumes collected</span><strong>{{ resume_count }}</strong><small>Uploaded or synced</small></div><div class="metric"><span>Connected inboxes</span><strong>{{ connected_accounts }}</strong><small>Gmail accounts</small></div></section>
-<div class="section-heading"><div><div class="eyebrow">Open positions</div><h2>Jobs in progress</h2></div><a class="text-link" href="/dashboard/jobs/new">Add a role →</a></div>
-{% if jobs %}<div class="job-grid">{% for job in jobs %}<a class="job-card" href="/dashboard/jobs/{{ job.id }}"><div class="job-card-top"><span class="job-icon">{{ job.title[:1].upper() }}</span><span class="chevron">↗</span></div><h3>{{ job.title }}</h3><p>{{ job.description[:110] }}{% if job.description|length > 110 %}…{% endif %}</p><div class="tag-row">{% for skill in job.required_skills[:3] %}<span class="tag">{{ skill }}</span>{% endfor %}</div><div class="job-meta"><span>{{ job.minimum_years_experience }}+ years experience</span><span>Open role</span></div></a>{% endfor %}</div>{% else %}<div class="empty"><div class="empty-icon">✦</div><h3>Your workspace is ready</h3><p>Create your first role to start collecting and reviewing candidates.</p><a class="button button-primary" href="/dashboard/jobs/new">Create your first job</a></div>{% endif %}
+<section class="hero">
+    <div>
+        <div class="eyebrow">Your hiring pipeline</div>
+        <h1>Find the right people, faster.</h1>
+        <p>Define the role, connect your inbox, and let HireLens organize every application.</p></div>
+    <a class="button button-primary" href="/dashboard/jobs/new">Create a job <span>→</span></a></section>
+<section class="metrics">
+    <div class="metric"><span>Active roles</span><strong>{{ job_count }}</strong><small>Across your workspace</small>
+    </div>
+    <div class="metric"><span>Resumes collected</span><strong>{{ resume_count }}</strong><small>Uploaded or
+        synced</small></div>
+    <div class="metric"><span>Connected inboxes</span><strong>{{ connected_accounts }}</strong><small>Gmail
+        accounts</small></div>
+</section>
+<div class="section-heading">
+    <div>
+        <div class="eyebrow">Open positions</div>
+        <h2>Jobs in progress</h2></div>
+    <a class="text-link" href="/dashboard/jobs/new">Add a role →</a></div>
+{% if jobs %}
+<div class="job-grid">{% for job in jobs %}<a class="job-card" href="/dashboard/jobs/{{ job.id }}">
+    <div class="job-card-top"><span class="job-icon">{{ job.title[:1].upper() }}</span><span class="chevron">↗</span>
+    </div>
+    <h3>{{ job.title }}</h3>
+    <p>{{ job.description[:110] }}{% if job.description|length > 110 %}…{% endif %}</p>
+    <div class="tag-row">{% for skill in job.required_skills[:3] %}<span class="tag">{{ skill }}</span>{% endfor %}
+    </div>
+    <div class="job-meta"><span>{{ job.minimum_years_experience }}+ years experience</span><span>Open role</span></div>
+</a>{% endfor %}
+</div>{% else %}
+<div class="empty">
+    <div class="empty-icon">✦</div>
+    <h3>Your workspace is ready</h3>
+    <p>Create your first role to start collecting and reviewing candidates.</p><a class="button button-primary"
+                                                                                  href="/dashboard/jobs/new">Create your
+    first job</a></div>{% endif %}
 {% endblock %}
