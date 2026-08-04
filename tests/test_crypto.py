@@ -20,3 +20,14 @@ def test_secret_decryption_rejects_tampered_token(monkeypatch):
         assert "decrypt" in str(error)
     else:
         raise AssertionError("tampered token was accepted")
+
+
+def test_secret_decryption_rejects_invalid_ciphertext(monkeypatch):
+    monkeypatch.setattr(crypto.get_settings(), "token_encryption_key", Fernet.generate_key().decode())
+
+    try:
+        crypto.decrypt_secret("not-a-fernet-token")
+    except ValueError as error:
+        assert "decrypt" in str(error)
+    else:
+        raise AssertionError("invalid ciphertext was accepted")
