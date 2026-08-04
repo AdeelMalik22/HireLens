@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     admin_password: str = "change-me-before-production"
     enable_dev_login: bool = False
     session_max_age_seconds: int = 28800
+    token_encryption_key: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",

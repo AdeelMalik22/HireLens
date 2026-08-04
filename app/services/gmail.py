@@ -17,6 +17,7 @@ from app.models.job import Job
 from app.models.resume import Resume
 from app.models.processed_email import ProcessedEmail
 from app.services.exceptions import DatabaseOperationError, NotFoundError, ServiceError
+from app.services.crypto import decrypt_secret, encrypt_secret
 
 logger = logging.getLogger(__name__)
 GMAIL_SCOPES = [
@@ -75,10 +76,10 @@ def complete_authorization(db: Session, code: str, state: str, user_id: int | No
             raise GmailConfigurationError("Google did not return an email address")
         account = db.query(EmailAccount).filter(EmailAccount.email_address == email).first()
         if account is None:
-            account = EmailAccount(provider="gmail", email_address=email, token_data=credentials.to_json(), user_id=user_id)
+            account = EmailAccount(provider="gmail", email_address=email, token_data=encrypt_secret(credentials.to_json()), user_id=user_id)
             db.add(account)
         else:
-            account.token_data = credentials.to_json()
+            account.token_data = encrypt_secret(credentials.to_json())
             if user_id:
                 account.user_id = user_id
         db.commit()
@@ -94,7 +95,8 @@ def complete_authorization(db: Session, code: str, state: str, user_id: int | No
 
 
 def _gmail_client(account: EmailAccount):
-    credentials = Credentials.from_authorized_user_info(json.loads(account.token_data), GMAIL_SCOPES)
+    token_data = account.token_data if account.token_data.lstrip().startswith("{") else decrypt_secret(account.token_data)
+    credentials = Credentials.from_authorized_user_info(json.loads(token_data), GMAIL_SCOPES)
     return build("gmail", "v1", credentials=credentials, cache_discovery=False)
 
 

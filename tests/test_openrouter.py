@@ -1,0 +1,29 @@
+import httpx
+import pytest
+
+from app.services import openrouter
+
+
+@pytest.mark.asyncio
+async def test_openrouter_parses_structured_response(monkeypatch):
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"choices": [{"message": {"content": '{"skills":["Python"]}'}}]}
+
+    class FakeClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return None
+
+        async def post(self, *args, **kwargs):
+            return FakeResponse()
+
+    monkeypatch.setattr(openrouter.httpx, "AsyncClient", lambda **kwargs: FakeClient())
+    monkeypatch.setattr(openrouter.get_settings(), "openrouter_api_key", "test-key")
+    result = await openrouter.extract_resume_data("Python developer")
+    assert result["skills"] == ["Python"]

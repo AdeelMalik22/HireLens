@@ -1,0 +1,16 @@
+from types import SimpleNamespace
+
+from app.services.scoring import score_candidate
+
+
+def test_score_matches_job_requirements():
+    job = SimpleNamespace(required_skills=["Python", "FastAPI"], preferred_skills=["Docker"], minimum_years_experience=2)
+    score, breakdown = score_candidate(job, {"skills": ["Python", "FastAPI", "Docker"], "years_of_experience": 2})
+    assert score == 100
+    assert breakdown["missing_required"] == []
+
+
+def test_score_reports_missing_required_skill():
+    job = SimpleNamespace(required_skills=["Python", "FastAPI"], preferred_skills=[], minimum_years_experience=0)
+    _, breakdown = score_candidate(job, {"skills": ["Python"], "years_of_experience": 0})
+    assert breakdown["missing_required"] == ["FastAPI"]

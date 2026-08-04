@@ -1,0 +1,10 @@
+from cryptography.fernet import Fernet
+
+from app.services import crypto
+
+
+def test_secret_encryption_round_trip(monkeypatch):
+    monkeypatch.setattr(crypto.get_settings(), "token_encryption_key", Fernet.generate_key().decode())
+    encrypted = crypto.encrypt_secret("private-token")
+    assert encrypted != "private-token"
+    assert crypto.decrypt_secret(encrypted) == "private-token"

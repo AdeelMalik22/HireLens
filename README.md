@@ -98,6 +98,14 @@ APP_SECRET_KEY=change-me-before-production
 
 Never commit `.env` or real credentials. `.env` is ignored by Git.
 
+Generate a token encryption key for local development:
+
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+Set the result as `TOKEN_ENCRYPTION_KEY`. Rotate it by generating a new key, reauthorizing Gmail accounts, and removing the old key only after all tokens have been re-encrypted or revoked.
+
 ## Gmail Setup
 
 1. Create or select a project in Google Cloud Console.
