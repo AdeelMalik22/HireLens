@@ -1,5 +1,6 @@
 import logging
 import json
+import secrets
 from pathlib import Path
 
 from googleapiclient.discovery import build
@@ -38,7 +39,8 @@ def _flow(state: str | None = None) -> Flow:
 
 def authorization_url() -> str:
     flow = _flow()
-    state = _signer().sign("gmail-connect").decode()
+    state_payload = json.dumps({"nonce": secrets.token_urlsafe(16), "code_verifier": flow.code_verifier})
+    state = _signer().sign(state_payload).decode()
     url, _ = flow.authorization_url(access_type="offline", include_granted_scopes="true", prompt="consent", state=state)
     return url
 
@@ -53,8 +55,9 @@ def list_accounts(db: Session) -> list[EmailAccount]:
 
 def complete_authorization(db: Session, code: str, state: str) -> EmailAccount:
     try:
-        _signer().unsign(state, max_age=600)
+        state_payload = json.loads(_signer().unsign(state, max_age=600))
         flow = _flow(state)
+        flow.code_verifier = state_payload.get("code_verifier")
         flow.fetch_token(code=code)
         credentials = flow.credentials
         email = credentials.id_token.get("email") if credentials.id_token else None
