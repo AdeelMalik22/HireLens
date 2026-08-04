@@ -31,3 +31,14 @@ def test_secret_decryption_rejects_invalid_ciphertext(monkeypatch):
         assert "decrypt" in str(error)
     else:
         raise AssertionError("invalid ciphertext was accepted")
+
+
+def test_secret_encryption_requires_configured_key(monkeypatch):
+    monkeypatch.setattr(crypto.get_settings(), "token_encryption_key", None)
+
+    try:
+        crypto.encrypt_secret("private-token")
+    except ValueError as error:
+        assert "TOKEN_ENCRYPTION_KEY" in str(error)
+    else:
+        raise AssertionError("encryption worked without a key")
