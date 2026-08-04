@@ -16,3 +16,9 @@ def test_login_page_renders_for_anonymous_user():
 
     assert response.status_code == 200
     assert "Welcome back" in response.text
+
+
+def test_login_rejects_missing_csrf_token():
+    response = TestClient(app).post("/login", data={"email": "admin@hirelens.local", "password": "wrong"})
+
+    assert response.status_code == 422
