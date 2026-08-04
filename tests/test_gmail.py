@@ -199,3 +199,12 @@ def test_gmail_authorization_rejects_missing_client_secret(monkeypatch):
     monkeypatch.setattr(settings, "google_client_secret", None)
     with pytest.raises(gmail.GmailConfigurationError):
         gmail.authorization_url()
+
+
+def test_gmail_sync_rejects_missing_account():
+    class FakeDB:
+        def get(self, model, identifier):
+            return None
+
+    with pytest.raises(gmail.NotFoundError, match="Email account or job"):
+        gmail.sync_resume_attachments_for_ids(FakeDB(), 999, 1, "has:attachment")
