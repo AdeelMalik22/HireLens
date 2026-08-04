@@ -19,3 +19,14 @@ def test_resume_parser_rejects_empty_pdf(tmp_path):
 
     with pytest.raises(ResumeParseError):
         extract_text(path)
+
+
+def test_resume_parser_extracts_docx_text(tmp_path):
+    from docx import Document
+
+    path = tmp_path / "resume.docx"
+    document = Document()
+    document.add_paragraph("Python backend engineer")
+    document.save(path)
+
+    assert "Python backend engineer" in extract_text(path)
