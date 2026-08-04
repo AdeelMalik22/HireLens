@@ -144,3 +144,7 @@ def test_gmail_client_rejects_corrupt_encrypted_token(monkeypatch):
     account = EmailAccount(token_data="gAAAA-corrupt", email_address="candidate@example.com", provider="gmail")
     with pytest.raises(ValueError, match="decrypt"):
         gmail._gmail_client(account)
+
+
+def test_gmail_scopes_include_openid_identity_scope():
+    assert "openid" in gmail.GMAIL_SCOPES
