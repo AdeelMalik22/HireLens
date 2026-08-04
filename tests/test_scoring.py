@@ -48,3 +48,9 @@ def test_score_partial_experience_gets_partial_points():
     score, breakdown = score_candidate(job, {"skills": [], "years_of_experience": 2})
     assert score == 85
     assert breakdown["experience"] == 15
+
+
+def test_score_is_case_insensitive_for_skills():
+    job = SimpleNamespace(required_skills=["Python"], preferred_skills=[], minimum_years_experience=0)
+    score, _ = score_candidate(job, {"skills": ["python"], "years_of_experience": 0})
+    assert score == 100
