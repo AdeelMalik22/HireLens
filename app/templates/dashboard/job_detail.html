@@ -1,7 +1,9 @@
 {% extends "dashboard/base.html" %}
 {% block title %}{{ job.title }} · HireLens{% endblock %}
 {% block content %}
-<a class="back-link" href="/dashboard">← All jobs</a><a class="button button-dark chat-link" href="/dashboard/jobs/{{ job.id }}/chat">Ask recruiter assistant <span>→</span></a>
+<a class="back-link" href="/dashboard">← All jobs</a><a class="button button-dark chat-link"
+                                                        href="/dashboard/jobs/{{ job.id }}/chat">Ask recruiter assistant
+    <span>→</span></a>
 {% if notice == 'connected' %}
 <div class="alert success-alert">Gmail connected successfully. You can now search and sync resume attachments.
 </div>{% endif %}{% if error %}
