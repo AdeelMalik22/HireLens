@@ -64,3 +64,11 @@ def test_gmail_client_accepts_legacy_plaintext_token_record(monkeypatch):
 
 def test_gmail_walk_parts_handles_empty_payload():
     assert list(gmail._walk_parts([])) == []
+
+
+def test_gmail_authorization_url_requests_offline_access(monkeypatch):
+    settings = gmail.get_settings()
+    monkeypatch.setattr(settings, "google_client_id", "client-id.apps.googleusercontent.com")
+    monkeypatch.setattr(settings, "google_client_secret", "client-secret")
+    url = gmail.authorization_url()
+    assert "access_type=offline" in url
