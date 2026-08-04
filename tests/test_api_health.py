@@ -54,3 +54,9 @@ def test_create_job_rejects_empty_title():
     response = TestClient(app).post("/api/v1/jobs", json={"title": "", "description": "Build systems", "required_skills": [], "preferred_skills": [], "minimum_years_experience": 0})
 
     assert response.status_code == 422
+
+
+def test_create_job_rejects_empty_description():
+    response = TestClient(app).post("/api/v1/jobs", json={"title": "Engineer", "description": "", "required_skills": [], "preferred_skills": [], "minimum_years_experience": 0})
+
+    assert response.status_code == 422
