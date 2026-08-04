@@ -11,6 +11,7 @@ from app.services import gmail
 from app.services import resumes as resume_service
 from app.services.exceptions import ServiceError
 from app.worker import process_resume_task
+from app.services.auth import current_user
 
 router = APIRouter(prefix="/dashboard")
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
@@ -22,7 +23,8 @@ def _redirect(path: str) -> RedirectResponse:
 
 @router.get("", response_class=HTMLResponse)
 def dashboard_home(request: Request, db: Session = Depends(get_db)):
-    return templates.TemplateResponse(request=request, name="dashboard/index.html", context=dashboard_service.dashboard_overview(db))
+    user = current_user(request, db)
+    return templates.TemplateResponse(request=request, name="dashboard/index.html", context=dashboard_service.dashboard_overview(db, user.id))
 
 
 @router.get("/jobs/new", response_class=HTMLResponse)
@@ -32,22 +34,26 @@ def new_job(request: Request):
 
 @router.post("/jobs")
 def create_job(
+    request: Request,
     title: str = Form(...), description: str = Form(...), required_skills: str = Form(""),
     preferred_skills: str = Form(""), minimum_years_experience: int = Form(0), db: Session = Depends(get_db),
 ):
-    job = dashboard_service.create_job_from_form(db, title, description, required_skills, preferred_skills, minimum_years_experience)
+    user = current_user(request, db)
+    job = dashboard_service.create_job_from_form(db, user.id, title, description, required_skills, preferred_skills, minimum_years_experience)
     return _redirect(f"/dashboard/jobs/{job.id}")
 
 
 @router.get("/jobs/{job_id}", response_class=HTMLResponse)
 def job_detail(request: Request, job_id: int, db: Session = Depends(get_db)):
-    return templates.TemplateResponse(request=request, name="dashboard/job_detail.html", context=dashboard_service.job_workspace(db, job_id))
+    user = current_user(request, db)
+    return templates.TemplateResponse(request=request, name="dashboard/job_detail.html", context=dashboard_service.job_workspace(db, job_id, user.id))
 
 
 @router.post("/jobs/{job_id}/upload")
-async def upload_resumes(job_id: int, files: list[UploadFile] = File(...), db: Session = Depends(get_db)):
-    dashboard_service.job_workspace(db, job_id)
-    resumes = await resume_service.upload_resumes(db, job_id, files)
+async def upload_resumes(request: Request, job_id: int, files: list[UploadFile] = File(...), db: Session = Depends(get_db)):
+    user = current_user(request, db)
+    dashboard_service.job_workspace(db, job_id, user.id)
+    resumes = await resume_service.upload_resumes(db, job_id, files, user.id)
     for resume in resumes:
         if resume.processing_status == "queued":
             process_resume_task.delay(resume.id)
@@ -55,20 +61,24 @@ async def upload_resumes(job_id: int, files: list[UploadFile] = File(...), db: S
 
 
 @router.get("/gmail/connect")
-def connect_gmail(request: Request, job_id: int):
+def connect_gmail(request: Request, job_id: int, db: Session = Depends(get_db)):
+    user = current_user(request, db)
+    dashboard_service.job_workspace(db, job_id, user.id)
     request.session["pending_gmail_job_id"] = job_id
     return RedirectResponse(gmail.authorization_url(), status_code=302)
 
 
 @router.get("/gmail/callback")
 def gmail_callback(code: str, state: str, db: Session = Depends(get_db)):
-    gmail.complete_authorization(db, code, state)
+    gmail.complete_authorization(db, code, state, request.session.get("user_id"))
     return _redirect("/dashboard")
 
 
 @router.post("/jobs/{job_id}/sync")
-def sync_gmail(job_id: int, account_id: int = Form(...), query: str = Form("has:attachment (filename:pdf OR filename:docx) newer_than:30d"), db: Session = Depends(get_db)):
-    resumes = gmail.sync_resume_attachments_for_ids(db, account_id, job_id, query)
+def sync_gmail(request: Request, job_id: int, account_id: int = Form(...), query: str = Form("has:attachment (filename:pdf OR filename:docx) newer_than:30d"), db: Session = Depends(get_db)):
+    user = current_user(request, db)
+    dashboard_service.job_workspace(db, job_id, user.id)
+    resumes = gmail.sync_resume_attachments_for_ids(db, account_id, job_id, query, user.id)
     for resume in resumes:
         if resume.processing_status == "queued":
             process_resume_task.delay(resume.id)

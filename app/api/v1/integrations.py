@@ -24,7 +24,7 @@ def connect_gmail() -> RedirectResponse:
 @router.get("/callback", response_model=EmailAccountResponse)
 def gmail_callback(request: Request, code: str = Query(...), state: str = Query(...), db: Session = Depends(get_db)) -> EmailAccount | RedirectResponse:
     try:
-        account = gmail.complete_authorization(db, code, state)
+        account = gmail.complete_authorization(db, code, state, request.session.get("user_id"))
         job_id = request.session.pop("pending_gmail_job_id", None)
         if job_id:
             return RedirectResponse(f"/dashboard/jobs/{job_id}?gmail=connected", status_code=303)

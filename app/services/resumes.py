@@ -16,7 +16,7 @@ ALLOWED_EXTENSIONS = {".pdf", ".docx"}
 logger = logging.getLogger(__name__)
 
 
-async def upload_resumes(db: Session, job_id: int, files: list[UploadFile]) -> list[Resume]:
+async def upload_resumes(db: Session, job_id: int, files: list[UploadFile], user_id: int | None = None) -> list[Resume]:
     settings = get_settings()
     upload_dir = Path(settings.upload_dir) / str(job_id)
     upload_dir.mkdir(parents=True, exist_ok=True)
@@ -45,7 +45,7 @@ async def upload_resumes(db: Session, job_id: int, files: list[UploadFile]) -> l
             stored_path.write_bytes(content)
             saved_paths.append(stored_path)
             resume = Resume(
-                job_id=job_id,
+                job_id=job_id, user_id=user_id,
                 original_filename=upload.filename or stored_filename,
                 stored_filename=stored_filename,
                 file_hash=file_hash,

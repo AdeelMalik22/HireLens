@@ -1,5 +1,6 @@
 import secrets
 import logging
+from datetime import datetime, timezone
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2 import id_token
@@ -7,6 +8,8 @@ from google.oauth2 import id_token
 from fastapi import HTTPException, Request, status
 
 from app.core.config import get_settings
+from app.models.user import User
+from sqlalchemy.orm import Session
 
 GOOGLE_LOGIN_SCOPES = [
     "openid",
@@ -26,6 +29,17 @@ def require_dashboard_auth(request: Request) -> None:
         raise HTTPException(status_code=status.HTTP_303_SEE_OTHER, headers={"Location": "/login"})
 
 
+def current_user(request: Request, db: Session) -> User:
+    user_id = request.session.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_303_SEE_OTHER, headers={"Location": "/login"})
+    user = db.get(User, user_id)
+    if user is None:
+        request.session.clear()
+        raise HTTPException(status_code=status.HTTP_303_SEE_OTHER, headers={"Location": "/login"})
+    return user
+
+
 def google_login_url() -> tuple[str, str, str | None]:
     settings = get_settings()
     if not settings.google_client_id or not settings.google_client_secret:
@@ -38,7 +52,7 @@ def google_login_url() -> tuple[str, str, str | None]:
     return url, state, flow.code_verifier
 
 
-def complete_google_login(code: str, state: str, code_verifier: str | None = None) -> str:
+def complete_google_login(db: Session, code: str, state: str, code_verifier: str | None = None) -> User:
     settings = get_settings()
     config = {"web": {"client_id": settings.google_client_id, "client_secret": settings.google_client_secret,
         "auth_uri": "https://accounts.google.com/o/oauth2/auth", "token_uri": "https://oauth2.googleapis.com/token",
@@ -54,4 +68,15 @@ def complete_google_login(code: str, state: str, code_verifier: str | None = Non
     email = claims.get("email")
     if not email or not claims.get("email_verified", False):
         raise ValueError("Google account email is not verified")
-    return email
+    user = db.query(User).filter(User.google_subject_id == claims["sub"]).first()
+    if user is None:
+        user = User(google_subject_id=claims["sub"], email=email, name=claims.get("name"), profile_image=claims.get("picture"))
+        db.add(user)
+    else:
+        user.email = email
+        user.name = claims.get("name")
+        user.profile_image = claims.get("picture")
+        user.last_login_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(user)
+    return user

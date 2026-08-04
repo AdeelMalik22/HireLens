@@ -1,9 +1,11 @@
 from pathlib import Path
 import logging
 
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+from app.db.session import get_db
 
 from app.services.auth import authenticate, complete_google_login, google_login_url
 
@@ -24,14 +26,15 @@ def google_login(request: Request):
 
 
 @router.get("/auth/google/callback")
-def google_callback(request: Request, code: str, state: str):
+def google_callback(request: Request, code: str, state: str, db: Session = Depends(get_db)):
     if state != request.session.pop("google_login_state", None):
         return templates.TemplateResponse(request=request, name="auth/login.html", context={"error": "Google sign-in session expired. Please try again."}, status_code=400)
     try:
         code_verifier = request.session.pop("google_login_code_verifier", None)
-        email = complete_google_login(code, state, code_verifier)
+        user = complete_google_login(db, code, state, code_verifier)
         request.session["authenticated"] = True
-        request.session["email"] = email
+        request.session["user_id"] = user.id
+        request.session["email"] = user.email
         return RedirectResponse("/dashboard", status_code=303)
     except Exception:
         logger.exception("Google sign-in failed")

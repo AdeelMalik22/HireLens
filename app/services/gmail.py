@@ -61,7 +61,7 @@ def list_accounts(db: Session) -> list[EmailAccount]:
         raise DatabaseOperationError("Unable to list Gmail accounts") from error
 
 
-def complete_authorization(db: Session, code: str, state: str) -> EmailAccount:
+def complete_authorization(db: Session, code: str, state: str, user_id: int | None = None) -> EmailAccount:
     try:
         state_payload = json.loads(_signer().unsign(state, max_age=600))
         flow = _flow(state)
@@ -74,10 +74,12 @@ def complete_authorization(db: Session, code: str, state: str) -> EmailAccount:
             raise GmailConfigurationError("Google did not return an email address")
         account = db.query(EmailAccount).filter(EmailAccount.email_address == email).first()
         if account is None:
-            account = EmailAccount(provider="gmail", email_address=email, token_data=credentials.to_json())
+            account = EmailAccount(provider="gmail", email_address=email, token_data=credentials.to_json(), user_id=user_id)
             db.add(account)
         else:
             account.token_data = credentials.to_json()
+            if user_id:
+                account.user_id = user_id
         db.commit()
         db.refresh(account)
         return account
@@ -150,10 +152,10 @@ def sync_resume_attachments(db: Session, account: EmailAccount, job: Job, query:
         raise DatabaseOperationError("Unable to sync resumes from Gmail") from error
 
 
-def sync_resume_attachments_for_ids(db: Session, account_id: int, job_id: int, query: str) -> list[Resume]:
+def sync_resume_attachments_for_ids(db: Session, account_id: int, job_id: int, query: str, user_id: int | None = None) -> list[Resume]:
     account = db.get(EmailAccount, account_id)
     job = db.get(Job, job_id)
-    if account is None or job is None:
+    if account is None or job is None or (user_id is not None and (account.user_id != user_id or job.user_id != user_id)):
         raise NotFoundError("Email account or job not found")
     return sync_resume_attachments(db, account, job, query)
 
