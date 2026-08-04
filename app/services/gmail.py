@@ -16,7 +16,12 @@ from app.models.resume import Resume
 from app.services.exceptions import DatabaseOperationError, NotFoundError, ServiceError
 
 logger = logging.getLogger(__name__)
-GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+GMAIL_SCOPES = [
+    "openid",
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+]
 
 
 class GmailConfigurationError(ServiceError):
