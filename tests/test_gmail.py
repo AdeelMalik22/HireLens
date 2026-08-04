@@ -30,3 +30,11 @@ def test_gmail_callback_rejects_invalid_signed_state():
 
     with pytest.raises(gmail.GmailConfigurationError, match="Invalid or expired"):
         gmail.complete_authorization(FakeDB(), "fake-code", "invalid-state")
+
+
+def test_gmail_walk_parts_returns_leaf_attachments():
+    parts = [{"filename": "resume.pdf", "body": {"attachmentId": "a1"}}, {"parts": [{"filename": "resume.docx", "body": {"attachmentId": "a2"}}]}]
+
+    result = list(gmail._walk_parts(parts))
+
+    assert [part["filename"] for part in result] == ["resume.pdf", "resume.docx"]
