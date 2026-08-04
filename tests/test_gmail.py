@@ -208,3 +208,16 @@ def test_gmail_sync_rejects_missing_account():
 
     with pytest.raises(gmail.NotFoundError, match="Email account or job"):
         gmail.sync_resume_attachments_for_ids(FakeDB(), 999, 1, "has:attachment")
+
+
+def test_gmail_sync_rejects_missing_job():
+    from app.models.email_account import EmailAccount
+
+    class FakeDB:
+        def get(self, model, identifier):
+            if model is EmailAccount:
+                return EmailAccount(id=1, user_id=1)
+            return None
+
+    with pytest.raises(gmail.NotFoundError, match="Email account or job"):
+        gmail.sync_resume_attachments_for_ids(FakeDB(), 1, 999, "has:attachment")
