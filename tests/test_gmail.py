@@ -102,3 +102,17 @@ def test_gmail_client_decrypts_encrypted_token(monkeypatch):
     monkeypatch.setattr(gmail, "build", lambda *args, **kwargs: "gmail-client")
 
     assert gmail._gmail_client(account) == "gmail-client"
+
+
+def test_gmail_authorization_state_contains_verifier(monkeypatch):
+    import json
+    from urllib.parse import parse_qs, urlparse
+
+    settings = gmail.get_settings()
+    monkeypatch.setattr(settings, "google_client_id", "client-id.apps.googleusercontent.com")
+    monkeypatch.setattr(settings, "google_client_secret", "client-secret")
+    url = gmail.authorization_url()
+    state = parse_qs(urlparse(url).query)["state"][0]
+    payload = json.loads(gmail._signer().unsign(state, max_age=600))
+
+    assert payload["code_verifier"]
