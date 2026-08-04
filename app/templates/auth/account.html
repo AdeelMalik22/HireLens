@@ -1,1 +1,16 @@
-{% extends "dashboard/base.html" %}{% block title %}Account · HireLens{% endblock %}{% block content %}<div class="form-wrap"><div class="eyebrow">Workspace account</div><h1>Your account.</h1><p class="intro">Your Google identity is used to secure this workspace.</p><div class="card form-card"><div class="profile-row"><div class="profile-avatar">{{ user.name[:1] if user.name else user.email[:1].upper() }}</div><div><h3>{{ user.name or 'HireLens user' }}</h3><p>{{ user.email }}</p></div></div><div class="account-detail"><span>Authentication</span><strong>Google</strong></div><div class="account-detail"><span>Member since</span><strong>{{ user.created_at.strftime('%b %d, %Y') if user.created_at else '—' }}</strong></div></div></div>{% endblock %}
+{% extends "dashboard/base.html" %}{% block title %}Account · HireLens{% endblock %}{% block content %}
+<div class="form-wrap">
+    <div class="eyebrow">Workspace account</div>
+    <h1>Your account.</h1>
+    <p class="intro">Your Google identity is used to secure this workspace.</p>
+    <div class="card form-card">
+        <div class="profile-row">
+            <div class="profile-avatar">{{ user.name[:1] if user.name else user.email[:1].upper() }}</div>
+            <div><h3>{{ user.name or 'HireLens user' }}</h3>
+                <p>{{ user.email }}</p></div>
+        </div>
+        <div class="account-detail"><span>Authentication</span><strong>Google</strong></div>
+        <div class="account-detail"><span>Member since</span><strong>{{ user.created_at.strftime('%b %d, %Y') if
+            user.created_at else '—' }}</strong></div>
+    </div>
+</div>{% endblock %}
