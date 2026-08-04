@@ -78,3 +78,9 @@ def test_gmail_walk_parts_preserves_attachment_metadata():
     part = {"filename": "cv.pdf", "mimeType": "application/pdf", "body": {"attachmentId": "attachment-1"}}
     result = list(gmail._walk_parts([part]))
     assert result == [part]
+
+
+def test_gmail_walk_parts_flattens_multiple_nested_levels():
+    parts = [{"parts": [{"parts": [{"filename": "deep.pdf", "body": {"attachmentId": "deep-1"}}]}]}]
+    result = list(gmail._walk_parts(parts))
+    assert result[0]["body"]["attachmentId"] == "deep-1"
