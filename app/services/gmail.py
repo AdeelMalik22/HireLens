@@ -39,6 +39,7 @@ def _flow(state: str | None = None) -> Flow:
 
 def authorization_url() -> str:
     flow = _flow()
+    flow.authorization_url(access_type="offline", include_granted_scopes="true", prompt="consent", state="pkce-init")
     state_payload = json.dumps({"nonce": secrets.token_urlsafe(16), "code_verifier": flow.code_verifier})
     state = _signer().sign(state_payload).decode()
     url, _ = flow.authorization_url(access_type="offline", include_granted_scopes="true", prompt="consent", state=state)
