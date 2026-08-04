@@ -6,6 +6,8 @@ from pathlib import Path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
+from google.oauth2 import id_token
+from google.auth.transport.requests import Request as GoogleRequest
 from itsdangerous import BadSignature, TimestampSigner
 from sqlalchemy.orm import Session
 
@@ -66,7 +68,8 @@ def complete_authorization(db: Session, code: str, state: str) -> EmailAccount:
         flow.code_verifier = state_payload.get("code_verifier")
         flow.fetch_token(code=code)
         credentials = flow.credentials
-        email = credentials.id_token.get("email") if credentials.id_token else None
+        claims = id_token.verify_oauth2_token(credentials.id_token, GoogleRequest(), get_settings().google_client_id) if credentials.id_token else {}
+        email = claims.get("email")
         if not email:
             raise GmailConfigurationError("Google did not return an email address")
         account = db.query(EmailAccount).filter(EmailAccount.email_address == email).first()
