@@ -15,6 +15,7 @@ from app.core.config import get_settings
 from app.models.email_account import EmailAccount
 from app.models.job import Job
 from app.models.resume import Resume
+from app.models.processed_email import ProcessedEmail
 from app.services.exceptions import DatabaseOperationError, NotFoundError, ServiceError
 
 logger = logging.getLogger(__name__)
@@ -97,11 +98,12 @@ def _gmail_client(account: EmailAccount):
     return build("gmail", "v1", credentials=credentials, cache_discovery=False)
 
 
-def sync_resume_attachments(db: Session, account: EmailAccount, job: Job, query: str) -> list[Resume]:
+def sync_resume_attachments(db: Session, account: EmailAccount, job: Job, query: str, page_token: str | None = None) -> list[Resume]:
     """Import PDF/DOCX attachments from Gmail for a job."""
     try:
         client = _gmail_client(account)
-        response = client.users().messages().list(userId="me", q=query, maxResults=100).execute()
+        request = client.users().messages().list(userId="me", q=query, maxResults=50, **({"pageToken": page_token} if page_token else {}))
+        response = request.execute()
         imported: list[Resume] = []
         upload_dir = Path(get_settings().upload_dir) / str(job.id)
         upload_dir.mkdir(parents=True, exist_ok=True)
@@ -110,6 +112,9 @@ def sync_resume_attachments(db: Session, account: EmailAccount, job: Job, query:
 
         for message_ref in response.get("messages", []):
             message_id = message_ref["id"]
+            processed = db.query(ProcessedEmail).filter(ProcessedEmail.account_id == account.id, ProcessedEmail.job_id == job.id, ProcessedEmail.message_id == message_id).first()
+            if processed:
+                continue
             message = client.users().messages().get(userId="me", id=message_id, format="full").execute()
             for part in _walk_parts(message.get("payload", {}).get("parts", [])):
                 filename = part.get("filename", "")
@@ -142,6 +147,7 @@ def sync_resume_attachments(db: Session, account: EmailAccount, job: Job, query:
                 )
                 db.add(resume)
                 imported.append(resume)
+            db.add(ProcessedEmail(account_id=account.id, job_id=job.id, message_id=message_id, status="processed"))
         db.commit()
         for resume in imported:
             db.refresh(resume)
@@ -152,12 +158,12 @@ def sync_resume_attachments(db: Session, account: EmailAccount, job: Job, query:
         raise DatabaseOperationError("Unable to sync resumes from Gmail") from error
 
 
-def sync_resume_attachments_for_ids(db: Session, account_id: int, job_id: int, query: str, user_id: int | None = None) -> list[Resume]:
+def sync_resume_attachments_for_ids(db: Session, account_id: int, job_id: int, query: str, user_id: int | None = None, page_token: str | None = None) -> list[Resume]:
     account = db.get(EmailAccount, account_id)
     job = db.get(Job, job_id)
     if account is None or job is None or (user_id is not None and (account.user_id != user_id or job.user_id != user_id)):
         raise NotFoundError("Email account or job not found")
-    return sync_resume_attachments(db, account, job, query)
+    return sync_resume_attachments(db, account, job, query, page_token)
 
 
 def _walk_parts(parts: list[dict]):

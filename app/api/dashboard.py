@@ -54,6 +54,8 @@ def job_detail(request: Request, job_id: int, db: Session = Depends(get_db)):
     user = current_user(request, db)
     context = dashboard_service.job_workspace(db, job_id, user.id)
     context.update({"user": user, "csrf_token": csrf_token(request)})
+    context["notice"] = request.query_params.get("gmail")
+    context["error"] = request.query_params.get("error")
     return templates.TemplateResponse(request=request, name="dashboard/job_detail.html", context=context)
 
 
