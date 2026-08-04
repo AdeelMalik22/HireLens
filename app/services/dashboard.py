@@ -23,7 +23,7 @@ def job_workspace(db: Session, job_id: int) -> dict:
     job = job_service.get_job(db, job_id)
     return {
         "job": job,
-        "resumes": resume_service.list_resumes(db, job_id),
+        "resumes": sorted(resume_service.list_resumes(db, job_id), key=lambda resume: (resume.overall_score is not None, resume.overall_score or 0), reverse=True),
         "accounts": list(db.scalars(select(EmailAccount).order_by(EmailAccount.created_at.desc())).all()),
     }
 

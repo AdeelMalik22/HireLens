@@ -45,6 +45,12 @@ Start the API:
 uvicorn main:app --reload
 ```
 
+Start a Celery worker in a second terminal to process resumes:
+
+```bash
+celery -A app.worker.celery_app worker --loglevel=info
+```
+
 API documentation is available at:
 
 ```text

@@ -10,6 +10,7 @@ from app.services import dashboard as dashboard_service
 from app.services import gmail
 from app.services import resumes as resume_service
 from app.services.exceptions import ServiceError
+from app.worker import process_resume_task
 
 router = APIRouter(prefix="/dashboard")
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
@@ -46,7 +47,10 @@ def job_detail(request: Request, job_id: int, db: Session = Depends(get_db)):
 @router.post("/jobs/{job_id}/upload")
 async def upload_resumes(job_id: int, files: list[UploadFile] = File(...), db: Session = Depends(get_db)):
     dashboard_service.job_workspace(db, job_id)
-    await resume_service.upload_resumes(db, job_id, files)
+    resumes = await resume_service.upload_resumes(db, job_id, files)
+    for resume in resumes:
+        if resume.processing_status == "queued":
+            process_resume_task.delay(resume.id)
     return _redirect(f"/dashboard/jobs/{job_id}")
 
 
@@ -64,5 +68,8 @@ def gmail_callback(code: str, state: str, db: Session = Depends(get_db)):
 
 @router.post("/jobs/{job_id}/sync")
 def sync_gmail(job_id: int, account_id: int = Form(...), query: str = Form("has:attachment (filename:pdf OR filename:docx) newer_than:30d"), db: Session = Depends(get_db)):
-    gmail.sync_resume_attachments_for_ids(db, account_id, job_id, query)
+    resumes = gmail.sync_resume_attachments_for_ids(db, account_id, job_id, query)
+    for resume in resumes:
+        if resume.processing_status == "queued":
+            process_resume_task.delay(resume.id)
     return _redirect(f"/dashboard/jobs/{job_id}")

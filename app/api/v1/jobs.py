@@ -9,6 +9,7 @@ from app.schemas.resume import ResumeResponse
 from app.services import jobs as job_service
 from app.services import resumes as resume_service
 from app.services.exceptions import DatabaseOperationError, FileTooLargeError, NotFoundError, UnsupportedFileError
+from app.worker import process_resume_task
 
 router = APIRouter(prefix="/jobs")
 
@@ -71,7 +72,11 @@ def delete_job(job_id: int, db: Session = Depends(get_db)) -> None:
 async def upload_resumes(job_id: int, files: list[UploadFile] = File(...), db: Session = Depends(get_db)) -> list[Resume]:
     try:
         job_service.get_job(db, job_id)
-        return await resume_service.upload_resumes(db, job_id, files)
+        resumes = await resume_service.upload_resumes(db, job_id, files)
+        for resume in resumes:
+            if resume.processing_status == "queued":
+                process_resume_task.delay(resume.id)
+        return resumes
     except NotFoundError as error:
         raise _not_found(error) from error
     except UnsupportedFileError as error:

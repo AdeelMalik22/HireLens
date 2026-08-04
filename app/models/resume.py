@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Float
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -19,6 +21,12 @@ class Resume(Base):
     source_attachment_id: Mapped[str | None] = mapped_column(String(128))
     processing_status: Mapped[str] = mapped_column(String(32), default="queued", nullable=False, index=True)
     processing_error: Mapped[str | None] = mapped_column(Text)
+    candidate_name: Mapped[str | None] = mapped_column(String(255))
+    candidate_email: Mapped[str | None] = mapped_column(String(320))
+    extracted_data: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    ai_summary: Mapped[str | None] = mapped_column(Text)
+    overall_score: Mapped[float | None] = mapped_column(Float)
+    score_breakdown: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
