@@ -16,6 +16,8 @@ class Settings(BaseSettings):
         description="SQLAlchemy database URL.",
     )
     redis_url: str = "redis://localhost:6379/0"
+    upload_dir: str = "storage/uploads"
+    max_resume_size_mb: int = 10
 
     openrouter_api_key: str | None = None
     openrouter_model: str = "openrouter/free"
