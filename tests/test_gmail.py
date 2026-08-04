@@ -116,3 +116,7 @@ def test_gmail_authorization_state_contains_verifier(monkeypatch):
     payload = json.loads(gmail._signer().unsign(state, max_age=600))
 
     assert payload["code_verifier"]
+
+
+def test_gmail_scopes_include_read_only_access():
+    assert "https://www.googleapis.com/auth/gmail.readonly" in gmail.GMAIL_SCOPES
