@@ -22,3 +22,10 @@ def test_login_rejects_missing_csrf_token():
     response = TestClient(app).post("/login", data={"email": "admin@hirelens.local", "password": "wrong"})
 
     assert response.status_code == 422
+
+
+def test_root_redirects_to_dashboard():
+    response = TestClient(app).get("/", follow_redirects=False)
+
+    assert response.status_code == 307
+    assert response.headers["location"] == "/dashboard"
