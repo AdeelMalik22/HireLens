@@ -60,3 +60,7 @@ def test_gmail_client_accepts_legacy_plaintext_token_record(monkeypatch):
     account = EmailAccount(token_data='{"token":"token","refresh_token":"refresh","token_uri":"https://oauth2.googleapis.com/token","client_id":"client","client_secret":"secret","scopes":[]}', email_address="candidate@example.com", provider="gmail")
 
     assert isinstance(gmail._gmail_client(account), FakeBuild)
+
+
+def test_gmail_walk_parts_handles_empty_payload():
+    assert list(gmail._walk_parts([])) == []
