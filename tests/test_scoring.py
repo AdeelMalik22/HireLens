@@ -68,3 +68,9 @@ def test_score_preferred_skill_is_optional():
     score, breakdown = score_candidate(job, {"skills": ["Python"], "years_of_experience": 0})
     assert score == 80
     assert breakdown["matched_preferred"] == []
+
+
+def test_score_extra_candidate_skills_do_not_reduce_score():
+    job = SimpleNamespace(required_skills=["Python"], preferred_skills=[], minimum_years_experience=0)
+    score, _ = score_candidate(job, {"skills": ["Python", "Rust", "Go"], "years_of_experience": 0})
+    assert score == 100
