@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 
 from app.services.auth import authenticate, complete_google_login, google_login_url
+from app.services.security import csrf_token, validate_csrf
+from app.services.auth import current_user
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
@@ -45,19 +47,27 @@ def google_callback(request: Request, code: str, state: str, db: Session = Depen
 def login_page(request: Request):
     if request.session.get("authenticated"):
         return RedirectResponse("/dashboard", status_code=303)
-    return templates.TemplateResponse(request=request, name="auth/login.html", context={"error": None})
+    return templates.TemplateResponse(request=request, name="auth/login.html", context={"error": None, "csrf_token": csrf_token(request)})
+
+
+@router.get("/account", response_class=HTMLResponse)
+def account(request: Request, db: Session = Depends(get_db)):
+    user = current_user(request, db)
+    return templates.TemplateResponse(request=request, name="auth/account.html", context={"user": user, "csrf_token": csrf_token(request)})
 
 
 @router.post("/login", response_class=HTMLResponse)
-def login(request: Request, email: str = Form(...), password: str = Form(...)):
+def login(request: Request, email: str = Form(...), password: str = Form(...), csrf: str = Form(...)):
+    validate_csrf(request, csrf)
     if not authenticate(email, password):
-        return templates.TemplateResponse(request=request, name="auth/login.html", context={"error": "The email or password is incorrect."}, status_code=401)
+        return templates.TemplateResponse(request=request, name="auth/login.html", context={"error": "The email or password is incorrect.", "csrf_token": csrf_token(request)}, status_code=401)
     request.session["authenticated"] = True
     request.session["email"] = email.strip().lower()
     return RedirectResponse("/dashboard", status_code=303)
 
 
 @router.post("/logout")
-def logout(request: Request):
+def logout(request: Request, csrf: str = Form(...)):
+    validate_csrf(request, csrf)
     request.session.clear()
     return RedirectResponse("/login", status_code=303)

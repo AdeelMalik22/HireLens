@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     app_secret_key: str = "change-me-in-development"
     admin_email: str = "admin@hirelens.local"
     admin_password: str = "change-me-before-production"
+    enable_dev_login: bool = False
+    session_max_age_seconds: int = 28800
 
     model_config = SettingsConfigDict(
         env_file=".env",

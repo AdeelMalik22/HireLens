@@ -26,7 +26,7 @@ app = FastAPI(
     description="AI-assisted resume screening API.",
     lifespan=lifespan,
 )
-app.add_middleware(SessionMiddleware, secret_key=settings.app_secret_key, https_only=False, same_site="lax")
+app.add_middleware(SessionMiddleware, secret_key=settings.app_secret_key, max_age=settings.session_max_age_seconds, https_only=False, same_site="lax")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(api_router, prefix=settings.api_prefix)
 app.include_router(auth_router)

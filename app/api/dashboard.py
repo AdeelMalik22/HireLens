@@ -12,6 +12,7 @@ from app.services import resumes as resume_service
 from app.services.exceptions import ServiceError
 from app.worker import process_resume_task
 from app.services.auth import current_user
+from app.services.security import csrf_token, validate_csrf
 
 router = APIRouter(prefix="/dashboard")
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
@@ -24,20 +25,23 @@ def _redirect(path: str) -> RedirectResponse:
 @router.get("", response_class=HTMLResponse)
 def dashboard_home(request: Request, db: Session = Depends(get_db)):
     user = current_user(request, db)
-    return templates.TemplateResponse(request=request, name="dashboard/index.html", context=dashboard_service.dashboard_overview(db, user.id))
+    context = dashboard_service.dashboard_overview(db, user.id)
+    context.update({"user": user, "csrf_token": csrf_token(request)})
+    return templates.TemplateResponse(request=request, name="dashboard/index.html", context=context)
 
 
 @router.get("/jobs/new", response_class=HTMLResponse)
 def new_job(request: Request):
-    return templates.TemplateResponse(request=request, name="dashboard/new_job.html", context={})
+    return templates.TemplateResponse(request=request, name="dashboard/new_job.html", context={"csrf_token": csrf_token(request)})
 
 
 @router.post("/jobs")
 def create_job(
     request: Request,
     title: str = Form(...), description: str = Form(...), required_skills: str = Form(""),
-    preferred_skills: str = Form(""), minimum_years_experience: int = Form(0), db: Session = Depends(get_db),
+    preferred_skills: str = Form(""), minimum_years_experience: int = Form(0), csrf: str = Form(...), db: Session = Depends(get_db),
 ):
+    validate_csrf(request, csrf)
     user = current_user(request, db)
     job = dashboard_service.create_job_from_form(db, user.id, title, description, required_skills, preferred_skills, minimum_years_experience)
     return _redirect(f"/dashboard/jobs/{job.id}")
@@ -46,11 +50,14 @@ def create_job(
 @router.get("/jobs/{job_id}", response_class=HTMLResponse)
 def job_detail(request: Request, job_id: int, db: Session = Depends(get_db)):
     user = current_user(request, db)
-    return templates.TemplateResponse(request=request, name="dashboard/job_detail.html", context=dashboard_service.job_workspace(db, job_id, user.id))
+    context = dashboard_service.job_workspace(db, job_id, user.id)
+    context.update({"user": user, "csrf_token": csrf_token(request)})
+    return templates.TemplateResponse(request=request, name="dashboard/job_detail.html", context=context)
 
 
 @router.post("/jobs/{job_id}/upload")
-async def upload_resumes(request: Request, job_id: int, files: list[UploadFile] = File(...), db: Session = Depends(get_db)):
+async def upload_resumes(request: Request, job_id: int, files: list[UploadFile] = File(...), csrf: str = Form(...), db: Session = Depends(get_db)):
+    validate_csrf(request, csrf)
     user = current_user(request, db)
     dashboard_service.job_workspace(db, job_id, user.id)
     resumes = await resume_service.upload_resumes(db, job_id, files, user.id)
@@ -69,13 +76,14 @@ def connect_gmail(request: Request, job_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/gmail/callback")
-def gmail_callback(code: str, state: str, db: Session = Depends(get_db)):
+def gmail_callback(request: Request, code: str, state: str, db: Session = Depends(get_db)):
     gmail.complete_authorization(db, code, state, request.session.get("user_id"))
     return _redirect("/dashboard")
 
 
 @router.post("/jobs/{job_id}/sync")
-def sync_gmail(request: Request, job_id: int, account_id: int = Form(...), query: str = Form("has:attachment (filename:pdf OR filename:docx) newer_than:30d"), db: Session = Depends(get_db)):
+def sync_gmail(request: Request, job_id: int, account_id: int = Form(...), query: str = Form("has:attachment (filename:pdf OR filename:docx) newer_than:30d"), csrf: str = Form(...), db: Session = Depends(get_db)):
+    validate_csrf(request, csrf)
     user = current_user(request, db)
     dashboard_service.job_workspace(db, job_id, user.id)
     resumes = gmail.sync_resume_attachments_for_ids(db, account_id, job_id, query, user.id)

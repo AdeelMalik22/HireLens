@@ -21,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 def authenticate(email: str, password: str) -> bool:
     settings = get_settings()
+    if not settings.enable_dev_login:
+        return False
     return secrets.compare_digest(email.strip().lower(), settings.admin_email.lower()) and secrets.compare_digest(password, settings.admin_password)
 
 
