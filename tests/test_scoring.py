@@ -14,3 +14,9 @@ def test_score_reports_missing_required_skill():
     job = SimpleNamespace(required_skills=["Python", "FastAPI"], preferred_skills=[], minimum_years_experience=0)
     _, breakdown = score_candidate(job, {"skills": ["Python"], "years_of_experience": 0})
     assert breakdown["missing_required"] == ["FastAPI"]
+
+
+def test_score_full_match_returns_100():
+    job = SimpleNamespace(required_skills=["Python"], preferred_skills=["Docker"], minimum_years_experience=3)
+    score, _ = score_candidate(job, {"skills": ["Python", "Docker"], "years_of_experience": 3})
+    assert score == 100
