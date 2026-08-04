@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
@@ -26,5 +27,5 @@ app.include_router(api_router, prefix=settings.api_prefix)
 
 
 @app.get("/", tags=["system"])
-async def root() -> dict[str, str]:
-    return {"message": "Welcome to HireLens"}
+async def root() -> RedirectResponse:
+    return RedirectResponse(url="/dashboard", status_code=307)
