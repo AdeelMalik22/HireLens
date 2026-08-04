@@ -72,3 +72,9 @@ def test_gmail_authorization_url_requests_offline_access(monkeypatch):
     monkeypatch.setattr(settings, "google_client_secret", "client-secret")
     url = gmail.authorization_url()
     assert "access_type=offline" in url
+
+
+def test_gmail_walk_parts_preserves_attachment_metadata():
+    part = {"filename": "cv.pdf", "mimeType": "application/pdf", "body": {"attachmentId": "attachment-1"}}
+    result = list(gmail._walk_parts([part]))
+    assert result == [part]
