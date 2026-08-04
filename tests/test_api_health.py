@@ -66,3 +66,10 @@ def test_create_job_rejects_non_integer_experience():
     response = TestClient(app).post("/api/v1/jobs", json={"title": "Engineer", "description": "Build systems", "required_skills": [], "preferred_skills": [], "minimum_years_experience": "many"})
 
     assert response.status_code == 422
+
+
+def test_create_job_requires_authenticated_user():
+    response = TestClient(app).post("/api/v1/jobs", json={"title": "Engineer", "description": "Build systems", "required_skills": ["Python"], "preferred_skills": [], "minimum_years_experience": 2})
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/login"
