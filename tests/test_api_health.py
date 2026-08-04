@@ -9,3 +9,10 @@ def test_health_endpoint_returns_service_status():
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
     assert response.json()["service"] == "HireLens API"
+
+
+def test_login_page_renders_for_anonymous_user():
+    response = TestClient(app).get("/login")
+
+    assert response.status_code == 200
+    assert "Welcome back" in response.text
