@@ -38,3 +38,13 @@ def test_gmail_walk_parts_returns_leaf_attachments():
     result = list(gmail._walk_parts(parts))
 
     assert [part["filename"] for part in result] == ["resume.pdf", "resume.docx"]
+
+
+def test_gmail_client_requires_token_encryption_key(monkeypatch):
+    from app.models.email_account import EmailAccount
+
+    monkeypatch.setattr(gmail.get_settings(), "token_encryption_key", None)
+    account = EmailAccount(token_data="gAAAA-encrypted-token", email_address="candidate@example.com", provider="gmail")
+
+    with pytest.raises(ValueError, match="TOKEN_ENCRYPTION_KEY"):
+        gmail._gmail_client(account)
