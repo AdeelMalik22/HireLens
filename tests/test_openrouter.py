@@ -27,3 +27,11 @@ async def test_openrouter_parses_structured_response(monkeypatch):
     monkeypatch.setattr(openrouter.get_settings(), "openrouter_api_key", "test-key")
     result = await openrouter.extract_resume_data("Python developer")
     assert result["skills"] == ["Python"]
+
+
+@pytest.mark.asyncio
+async def test_openrouter_requires_api_key(monkeypatch):
+    monkeypatch.setattr(openrouter.get_settings(), "openrouter_api_key", None)
+
+    with pytest.raises(openrouter.AIExtractionError, match="API key"):
+        await openrouter.extract_resume_data("resume text")
