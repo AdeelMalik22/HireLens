@@ -120,3 +120,7 @@ def test_gmail_authorization_state_contains_verifier(monkeypatch):
 
 def test_gmail_scopes_include_read_only_access():
     assert "https://www.googleapis.com/auth/gmail.readonly" in gmail.GMAIL_SCOPES
+
+
+def test_gmail_scopes_do_not_request_send_access():
+    assert "https://www.googleapis.com/auth/gmail.send" not in gmail.GMAIL_SCOPES
