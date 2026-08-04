@@ -84,3 +84,8 @@ def test_gmail_walk_parts_flattens_multiple_nested_levels():
     parts = [{"parts": [{"parts": [{"filename": "deep.pdf", "body": {"attachmentId": "deep-1"}}]}]}]
     result = list(gmail._walk_parts(parts))
     assert result[0]["body"]["attachmentId"] == "deep-1"
+
+
+def test_gmail_walk_parts_returns_parts_without_nested_children():
+    part = {"filename": "resume.docx", "body": {"attachmentId": "doc-1"}, "parts": []}
+    assert list(gmail._walk_parts([part])) == [part]
