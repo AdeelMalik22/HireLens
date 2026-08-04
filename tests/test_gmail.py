@@ -124,3 +124,14 @@ def test_gmail_scopes_include_read_only_access():
 
 def test_gmail_scopes_do_not_request_send_access():
     assert "https://www.googleapis.com/auth/gmail.send" not in gmail.GMAIL_SCOPES
+
+
+def test_gmail_oauth_state_has_nonce(monkeypatch):
+    import json
+    from urllib.parse import parse_qs, urlparse
+    settings = gmail.get_settings()
+    monkeypatch.setattr(settings, "google_client_id", "client-id.apps.googleusercontent.com")
+    monkeypatch.setattr(settings, "google_client_secret", "client-secret")
+    state = parse_qs(urlparse(gmail.authorization_url()).query)["state"][0]
+    payload = json.loads(gmail._signer().unsign(state, max_age=600))
+    assert payload["nonce"]
