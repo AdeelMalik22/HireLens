@@ -54,3 +54,10 @@ def test_score_is_case_insensitive_for_skills():
     job = SimpleNamespace(required_skills=["Python"], preferred_skills=[], minimum_years_experience=0)
     score, _ = score_candidate(job, {"skills": ["python"], "years_of_experience": 0})
     assert score == 100
+
+
+def test_score_empty_candidate_skills_reports_all_required_missing():
+    job = SimpleNamespace(required_skills=["Python", "SQL"], preferred_skills=[], minimum_years_experience=0)
+    score, breakdown = score_candidate(job, {"skills": [], "years_of_experience": 0})
+    assert score == 50
+    assert breakdown["missing_required"] == ["Python", "SQL"]
