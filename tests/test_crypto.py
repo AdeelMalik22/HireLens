@@ -42,3 +42,17 @@ def test_secret_encryption_requires_configured_key(monkeypatch):
         assert "TOKEN_ENCRYPTION_KEY" in str(error)
     else:
         raise AssertionError("encryption worked without a key")
+
+
+def test_secret_decryption_rejects_wrong_key(monkeypatch):
+    original_key = Fernet.generate_key().decode()
+    monkeypatch.setattr(crypto.get_settings(), "token_encryption_key", original_key)
+    encrypted = crypto.encrypt_secret("private-token")
+    monkeypatch.setattr(crypto.get_settings(), "token_encryption_key", Fernet.generate_key().decode())
+
+    try:
+        crypto.decrypt_secret(encrypted)
+    except ValueError as error:
+        assert "decrypt" in str(error)
+    else:
+        raise AssertionError("ciphertext decrypted with the wrong key")
