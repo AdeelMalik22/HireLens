@@ -17,4 +17,5 @@ class ResumeResponse(BaseModel):
     ai_summary: str | None = None
     overall_score: float | None = None
     score_breakdown: dict = {}
+    review_status: str = "pending"
     created_at: datetime

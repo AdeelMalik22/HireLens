@@ -30,6 +30,7 @@ class Resume(Base):
     ai_summary: Mapped[str | None] = mapped_column(Text)
     overall_score: Mapped[float | None] = mapped_column(Float)
     score_breakdown: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    review_status: Mapped[str] = mapped_column(String(32), default="pending", nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

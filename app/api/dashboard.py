@@ -14,6 +14,7 @@ from app.worker import process_resume_task
 from app.services.auth import current_user
 from app.services.security import csrf_token, validate_csrf
 from app.services import reprocessing
+from app.services import candidates as candidate_service
 
 router = APIRouter(prefix="/dashboard")
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
@@ -102,3 +103,18 @@ def reprocess_job(request: Request, job_id: int, csrf: str = Form(...), db: Sess
     for resume_id in reprocessing.reprocess_failed(db, job_id, user.id):
         process_resume_task.delay(resume_id)
     return _redirect(f"/dashboard/jobs/{job_id}")
+
+
+@router.get("/candidates/{candidate_id}", response_class=HTMLResponse)
+def candidate_detail(request: Request, candidate_id: int, db: Session = Depends(get_db)):
+    user = current_user(request, db)
+    candidate = candidate_service.get_candidate(db, candidate_id, user.id)
+    return templates.TemplateResponse(request=request, name="dashboard/candidate_detail.html", context={"candidate": candidate, "user": user, "csrf_token": csrf_token(request)})
+
+
+@router.post("/candidates/{candidate_id}/review")
+def review_candidate(request: Request, candidate_id: int, review_status: str = Form(...), csrf: str = Form(...), db: Session = Depends(get_db)):
+    validate_csrf(request, csrf)
+    user = current_user(request, db)
+    candidate_service.update_review_status(db, candidate_id, user.id, review_status)
+    return _redirect(f"/dashboard/candidates/{candidate_id}")
