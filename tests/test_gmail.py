@@ -183,3 +183,11 @@ def test_gmail_client_uses_gmail_api_service(monkeypatch):
     service, options = gmail._gmail_client(account)
     assert service == "gmail"
     assert options["cache_discovery"] is False
+
+
+def test_gmail_authorization_rejects_missing_client_id(monkeypatch):
+    settings = gmail.get_settings()
+    monkeypatch.setattr(settings, "google_client_id", None)
+    monkeypatch.setattr(settings, "google_client_secret", "client-secret")
+    with pytest.raises(gmail.GmailConfigurationError):
+        gmail.authorization_url()
