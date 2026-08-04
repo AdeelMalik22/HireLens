@@ -157,3 +157,13 @@ def test_gmail_authorization_url_uses_configured_client(monkeypatch):
     monkeypatch.setattr(settings, "google_client_secret", "configured-secret")
     params = parse_qs(urlparse(gmail.authorization_url()).query)
     assert params["client_id"][0] == "configured-client.apps.googleusercontent.com"
+
+
+def test_gmail_authorization_url_uses_configured_redirect_uri(monkeypatch):
+    from urllib.parse import parse_qs, urlparse
+    settings = gmail.get_settings()
+    monkeypatch.setattr(settings, "google_client_id", "client-id.apps.googleusercontent.com")
+    monkeypatch.setattr(settings, "google_client_secret", "client-secret")
+    monkeypatch.setattr(settings, "google_redirect_uri", "http://localhost:9000/gmail/callback")
+    params = parse_qs(urlparse(gmail.authorization_url()).query)
+    assert params["redirect_uri"][0] == "http://localhost:9000/gmail/callback"
