@@ -8,7 +8,11 @@ from fastapi import HTTPException, Request, status
 
 from app.core.config import get_settings
 
-GOOGLE_LOGIN_SCOPES = ["openid", "email", "profile"]
+GOOGLE_LOGIN_SCOPES = [
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+]
 logger = logging.getLogger(__name__)
 
 
