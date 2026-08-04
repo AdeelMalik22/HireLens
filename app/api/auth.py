@@ -1,4 +1,5 @@
 from pathlib import Path
+import logging
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -8,6 +9,7 @@ from app.services.auth import authenticate, complete_google_login, google_login_
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
+logger = logging.getLogger(__name__)
 
 
 @router.get("/auth/google/login")
@@ -32,6 +34,7 @@ def google_callback(request: Request, code: str, state: str):
         request.session["email"] = email
         return RedirectResponse("/dashboard", status_code=303)
     except Exception:
+        logger.exception("Google sign-in failed")
         return templates.TemplateResponse(request=request, name="auth/login.html", context={"error": "Google sign-in could not be completed."}, status_code=401)
 
 

@@ -1,4 +1,5 @@
 import secrets
+import logging
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2 import id_token
@@ -8,6 +9,7 @@ from fastapi import HTTPException, Request, status
 from app.core.config import get_settings
 
 GOOGLE_LOGIN_SCOPES = ["openid", "email", "profile"]
+logger = logging.getLogger(__name__)
 
 
 def authenticate(email: str, password: str) -> bool:
@@ -41,5 +43,11 @@ def complete_google_login(code: str, state: str, code_verifier: str | None = Non
     if code_verifier:
         flow.code_verifier = code_verifier
     flow.fetch_token(code=code)
-    claims = id_token.verify_oauth2_token(flow.credentials.id_token, GoogleRequest(), settings.google_client_id)
-    return claims["email"]
+    token = flow.credentials.id_token
+    if not token:
+        raise ValueError("Google did not return an identity token")
+    claims = id_token.verify_oauth2_token(token, GoogleRequest(), settings.google_client_id)
+    email = claims.get("email")
+    if not email or not claims.get("email_verified", False):
+        raise ValueError("Google account email is not verified")
+    return email
