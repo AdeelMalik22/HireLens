@@ -74,3 +74,10 @@ def test_score_extra_candidate_skills_do_not_reduce_score():
     job = SimpleNamespace(required_skills=["Python"], preferred_skills=[], minimum_years_experience=0)
     score, _ = score_candidate(job, {"skills": ["Python", "Rust", "Go"], "years_of_experience": 0})
     assert score == 100
+
+
+def test_score_zero_experience_gets_no_experience_points_when_required():
+    job = SimpleNamespace(required_skills=[], preferred_skills=[], minimum_years_experience=5)
+    score, breakdown = score_candidate(job, {"skills": [], "years_of_experience": 0})
+    assert score == 70
+    assert breakdown["experience"] == 0
