@@ -36,3 +36,9 @@ def test_dashboard_redirects_anonymous_user_to_login():
 
     assert response.status_code == 303
     assert response.headers["location"] == "/login"
+
+
+def test_create_job_rejects_missing_payload():
+    response = TestClient(app).post("/api/v1/jobs")
+
+    assert response.status_code == 422
